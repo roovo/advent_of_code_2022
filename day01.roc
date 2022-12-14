@@ -33,7 +33,8 @@ main =
                 |> List.sum
                 |> Num.toStr
 
-        Stdout.line "part1: \(part1)\npart2: \(part2)"
+        _ <- Stdout.line "part1: \(part1)" |> Task.await
+        Stdout.line "part2: \(part2)"
 
    Task.attempt task \result ->
         when result is
