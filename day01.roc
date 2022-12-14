@@ -11,7 +11,7 @@ app "aoc_day1"
 
 main : Task {} []
 main =
-   filePath = Path.fromStr "input.txt"
+   filePath = Path.fromStr "day01_input.txt"
 
    task =
         contents <- File.readUtf8 filePath |> Task.await
@@ -57,23 +57,26 @@ sumIntegerBlock = \integerBlock ->
     |> List.sum
 
 
-expect sumIntegerBlocks   """1000
-                          2000
-                          3000
+expect
+    summedBlocks = sumIntegerBlocks   """1000
+                                      2000
+                                      3000
 
-                          4000
+                                      4000
 
-                          5000
-                          6000
+                                      5000
+                                      6000
 
-                          bar
+                                      bar
 
-                          7000
-                          8000
-                          9000
+                                      7000
+                                      8000
+                                      9000
 
-                          10000
-                          """ == [6000, 4000, 11000, 0, 24000, 10000]
+                                      10000
+                                      """
+    summedBlocks == [6000, 4000, 11000, 0, 24000, 10000]
 
-expect sumIntegerBlock "1000\n2000\n3000" == 6000
-expect sumIntegerBlock "1000\n2000\nfoo\n3000" == 6000
+expect
+    summedInts = sumIntegerBlock "1000\n2000\nfoo\n3000"
+    summedInts == 6000
