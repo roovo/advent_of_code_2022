@@ -19,9 +19,20 @@ main =
    task =
         contents <- File.readUtf8 filePath |> Task.await
 
-        output =
+        part1 : Str
+        part1 =
             parse inputParser contents (\s -> Str.countUtf8Bytes s == 0)
-            |> Result.map (\r -> List.map r Rps.Round.score)
+            |> Result.map scoreRounds
+            |> Result.map List.sum
+            |> Result.map (\s ->
+                                printable = Num.toStr s
+                                "The total score is: \(printable)")
+            |> Result.withDefault "Ooops, the sum could not be calculated"
+
+        part2 : Str
+        part2 =
+            parse inputParser2 contents (\s -> Str.countUtf8Bytes s == 0)
+            |> Result.map scoreRounds
             |> Result.map List.sum
             |> Result.map (\s ->
                                 printable = Num.toStr s
@@ -29,7 +40,8 @@ main =
             |> Result.withDefault "Ooops, the sum could not be calculated"
 
 
-        Stdout.line "part1: \(output)"
+        _ <- Stdout.line "part1: \(part1)" |> Task.await
+        Stdout.line "part1: \(part2)"
 
    Task.onFail task \_ -> Stdout.line "Oops something went wrong."
 
@@ -43,6 +55,18 @@ inputParser =
     |> apply roundsParer
     |> apply (Parser.Core.many lineFeedParser)
 
+inputParser2 : Parser Str (List Round)
+inputParser2 =
+    roundsParer =
+        Parser.Core.sepBy Rps.Round.parserPart2 lineFeedParser
+
+    const (\rs -> \_ -> rs)
+    |> apply roundsParer
+    |> apply (Parser.Core.many lineFeedParser)
+
+
+scoreRounds : List Round -> List Nat
+scoreRounds = \r -> List.map r Rps.Round.score
 
 
 ### TESTS - inputParser
@@ -72,3 +96,13 @@ expect
         {opponent: Scisors, you: Scisors },
     ]
 
+
+### TESTS - inputParser2
+
+expect
+    parsedInput = parse inputParser2 "A Y\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedInput == Ok [
+        {opponent: Rock, you: Rock },
+        {opponent: Paper, you: Rock },
+        {opponent: Scisors, you: Rock },
+    ]

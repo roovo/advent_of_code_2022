@@ -2,6 +2,7 @@ interface Rps.Round
     exposes [
         Round,
         parser,
+        parserPart2,
         score,
     ]
     imports [
@@ -16,10 +17,35 @@ Round : { opponent : Play, you : Play }
 
 parser : Parser Str Round
 parser =
-    const (\o -> \_ -> \y -> { opponent: o, you: y })
-        |> apply Rps.Play.parser
-        |> apply spaceParser
-        |> apply Rps.Play.parser
+    parserHelper (\o -> \_ -> \y -> { opponent: o, you: y })
+
+
+parserPart2 : Parser Str Round
+parserPart2 =
+    parserHelper (\o -> \_ -> \y ->
+        when { opponent: o, outcome: y } is
+        { opponent: Rock, outcome: Rock } ->
+            { opponent: o, you: Scisors }
+        { opponent: Paper, outcome: Rock } ->
+            { opponent: o, you: Rock }
+        { opponent: Scisors, outcome: Rock } ->
+            { opponent: o, you: Paper }
+
+        { opponent: Rock, outcome: Paper } ->
+            { opponent: o, you: Rock }
+        { opponent: Paper, outcome: Paper } ->
+            { opponent: o, you: Paper }
+        { opponent: Scisors, outcome: Paper } ->
+            { opponent: o, you: Scisors }
+
+        { opponent: Rock, outcome: Scisors } ->
+            { opponent: o, you: Paper }
+        { opponent: Paper, outcome: Scisors } ->
+            { opponent: o, you: Scisors }
+        { opponent: Scisors, outcome: Scisors } ->
+            { opponent: o, you: Rock }
+    )
+
 
 
 score : Round -> Nat
@@ -41,11 +67,29 @@ score = \round ->
     choiceScore round.you + resultScore
 
 
+### PRIVATE
+
+parserHelper : (Play -> ({} -> (Play -> Round))) -> Parser Str Round
+parserHelper = \builder ->
+    const builder
+        |> apply Rps.Play.parser
+        |> apply spaceParser
+        |> apply Rps.Play.parser
+
+
 ### TESTS - parser
 
 expect
-    parsedRound = parse parser "B Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
-    parsedRound == Ok { opponent: Paper, you: Scisors }
+    parsedRound = parse parser "A Y" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound == Ok { opponent: Rock, you: Paper }
+
+expect
+    parsedRound = parse parser "B X" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound == Ok { opponent: Paper, you: Rock }
+
+expect
+    parsedRound = parse parser "C Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound == Ok { opponent: Scisors, you: Scisors }
 
 expect
     parsedRound = parse parser "BZ" (\leftover -> Str.countUtf8Bytes leftover == 0)
@@ -57,6 +101,33 @@ expect
 
 expect
     parsedRound = parse parser "A Zx" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound == Err (ParsingIncomplete "x")
+
+
+### TESTS - parserPart2
+
+expect
+    parsedRound = parse parserPart2 "A Y" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound == Ok { opponent: Rock, you: Rock }
+
+expect
+    parsedRound = parse parserPart2 "B X" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound == Ok { opponent: Paper, you: Rock }
+
+expect
+    parsedRound = parse parserPart2 "C Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound == Ok { opponent: Scisors, you: Rock }
+
+expect
+    parsedRound = parse parserPart2 "BZ" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound == Err (ParsingFailure "whitespace expected")
+
+expect
+    parsedRound = parse parserPart2 "K Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound == Err (ParsingFailure "unexpected play, can only be one of: A, B, C, X, Y, or Z")
+
+expect
+    parsedRound = parse parserPart2 "A Zx" (\leftover -> Str.countUtf8Bytes leftover == 0)
     parsedRound == Err (ParsingIncomplete "x")
 
 
