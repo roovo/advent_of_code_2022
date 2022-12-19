@@ -21,23 +21,11 @@ main =
 
         part1 : Str
         part1 =
-            parse inputParser contents (\s -> Str.countUtf8Bytes s == 0)
-            |> Result.map scoreRounds
-            |> Result.map List.sum
-            |> Result.map (\s ->
-                                printable = Num.toStr s
-                                "The total score is: \(printable)")
-            |> Result.withDefault "Ooops, the sum could not be calculated"
+            parseAndScore Rps.Round.parser contents
 
         part2 : Str
         part2 =
-            parse inputParser2 contents (\s -> Str.countUtf8Bytes s == 0)
-            |> Result.map scoreRounds
-            |> Result.map List.sum
-            |> Result.map (\s ->
-                                printable = Num.toStr s
-                                "The total score is: \(printable)")
-            |> Result.withDefault "Ooops, the sum could not be calculated"
+            parseAndScore Rps.Round.parserPart2 contents
 
 
         _ <- Stdout.line "part1: \(part1)" |> Task.await
@@ -46,63 +34,64 @@ main =
    Task.onFail task \_ -> Stdout.line "Oops something went wrong."
 
 
-inputParser : Parser Str (List Round)
-inputParser =
-    roundsParer =
-        Parser.Core.sepBy Rps.Round.parser lineFeedParser
+### PRIVATE
 
-    const (\rs -> \_ -> rs)
-    |> apply roundsParer
-    |> apply (Parser.Core.many lineFeedParser)
-
-inputParser2 : Parser Str (List Round)
-inputParser2 =
+inputParser : Parser Str Round -> Parser Str (List Round)
+inputParser = \roundParser ->
     roundsParer =
-        Parser.Core.sepBy Rps.Round.parserPart2 lineFeedParser
+        Parser.Core.sepBy roundParser lineFeedParser
 
     const (\rs -> \_ -> rs)
     |> apply roundsParer
     |> apply (Parser.Core.many lineFeedParser)
 
 
-scoreRounds : List Round -> List Nat
-scoreRounds = \r -> List.map r Rps.Round.score
+parseAndScore : Parser Str Round, Str -> Str
+parseAndScore = \parser, contents ->
+    scoreRounds : List Round -> List Nat
+    scoreRounds = \r -> List.map r Rps.Round.score
+
+    parse (inputParser parser) contents (\s -> Str.countUtf8Bytes s == 0)
+    |> Result.map scoreRounds
+    |> Result.map List.sum
+    |> Result.map (\s ->
+                        printable = Num.toStr s
+                        "The total score is: \(printable)")
+    |> Result.withDefault "Ooops, the sum could not be calculated"
+
 
 
 ### TESTS - inputParser
 
 expect
-    parsedInput = parse inputParser "A Y\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedInput = parse (inputParser Rps.Round.parser) "A Y\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
     parsedInput == Ok [
         {opponent: Rock, you: Paper },
         {opponent: Paper, you: Rock },
         {opponent: Scisors, you: Scisors },
     ]
 
-# these are not great parse errors!
 expect
-    parsedInput = parse inputParser "AY\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
-    parsedInput == Err (ParsingIncomplete "AY\nB X\nC Z")
-
-expect
-    parsedInput = parse inputParser "A Y\nB XC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
-    parsedInput == Err (ParsingIncomplete "C Z")
-
-expect
-    parsedInput = parse inputParser "A Y\nB X\nC Z\n" (\leftover -> Str.countUtf8Bytes leftover == 0)
-    parsedInput == Ok [
-        {opponent: Rock, you: Paper },
-        {opponent: Paper, you: Rock },
-        {opponent: Scisors, you: Scisors },
-    ]
-
-
-### TESTS - inputParser2
-
-expect
-    parsedInput = parse inputParser2 "A Y\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedInput = parse (inputParser Rps.Round.parserPart2) "A Y\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
     parsedInput == Ok [
         {opponent: Rock, you: Rock },
         {opponent: Paper, you: Rock },
         {opponent: Scisors, you: Rock },
+    ]
+
+# these are not great parse errors!
+expect
+    parsedInput = parse (inputParser Rps.Round.parser) "AY\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedInput == Err (ParsingIncomplete "AY\nB X\nC Z")
+
+expect
+    parsedInput = parse (inputParser Rps.Round.parser) "A Y\nB XC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedInput == Err (ParsingIncomplete "C Z")
+
+expect
+    parsedInput = parse (inputParser Rps.Round.parser) "A Y\nB X\nC Z\n" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedInput == Ok [
+        {opponent: Rock, you: Paper },
+        {opponent: Paper, you: Rock },
+        {opponent: Scisors, you: Scisors },
     ]
