@@ -23,26 +23,26 @@ parser =
 parserPart2 : Parser Str Round
 parserPart2 =
     parserHelper (\o -> \_ -> \y ->
-        when { opponent: o, outcome: y } is
-        { opponent: Rock, outcome: Rock } ->
+        when Pair o y is
+        Pair Rock Rock ->
             { opponent: o, you: Scisors }
-        { opponent: Paper, outcome: Rock } ->
+        Pair Paper Rock ->
             { opponent: o, you: Rock }
-        { opponent: Scisors, outcome: Rock } ->
+        Pair Scisors Rock ->
             { opponent: o, you: Paper }
 
-        { opponent: Rock, outcome: Paper } ->
+        Pair Rock Paper ->
             { opponent: o, you: Rock }
-        { opponent: Paper, outcome: Paper } ->
+        Pair Paper Paper ->
             { opponent: o, you: Paper }
-        { opponent: Scisors, outcome: Paper } ->
+        Pair Scisors Paper ->
             { opponent: o, you: Scisors }
 
-        { opponent: Rock, outcome: Scisors } ->
+        Pair Rock Scisors ->
             { opponent: o, you: Paper }
-        { opponent: Paper, outcome: Scisors } ->
+        Pair Paper Scisors ->
             { opponent: o, you: Scisors }
-        { opponent: Scisors, outcome: Scisors } ->
+        Pair Scisors Scisors ->
             { opponent: o, you: Rock }
     )
 
