@@ -21,11 +21,11 @@ main =
 
         part1 : Str
         part1 =
-            parseAndScore Rps.Round.parser contents
+            parseAndScore Rps.Round.parser (Str.toUtf8 contents)
 
         part2 : Str
         part2 =
-            parseAndScore Rps.Round.parserPart2 contents
+            parseAndScore Rps.Round.parserPart2 (Str.toUtf8 contents)
 
 
         _ <- Stdout.line "part1: \(part1)" |> Task.await
@@ -36,7 +36,7 @@ main =
 
 ### PRIVATE
 
-inputParser : Parser Str Round -> Parser Str (List Round)
+inputParser : Parser (List U8) Round -> Parser (List U8) (List Round)
 inputParser = \roundParser ->
     roundsParer =
         Parser.Core.sepBy roundParser lineFeedParser
@@ -46,12 +46,12 @@ inputParser = \roundParser ->
     |> apply (Parser.Core.many lineFeedParser)
 
 
-parseAndScore : Parser Str Round, Str -> Str
+parseAndScore : Parser (List U8) Round, (List U8) -> Str
 parseAndScore = \parser, contents ->
     scoreRounds : List Round -> List Nat
     scoreRounds = \r -> List.map r Rps.Round.score
 
-    parse (inputParser parser) contents (\s -> Str.countUtf8Bytes s == 0)
+    parse (inputParser parser) contents List.isEmpty
     |> Result.map scoreRounds
     |> Result.map List.sum
     |> Result.map (\s ->
@@ -64,7 +64,7 @@ parseAndScore = \parser, contents ->
 ### TESTS - inputParser
 
 expect
-    parsedInput = parse (inputParser Rps.Round.parser) "A Y\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedInput = parse (inputParser Rps.Round.parser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
     parsedInput == Ok [
         {opponent: Rock, you: Paper },
         {opponent: Paper, you: Rock },
@@ -72,7 +72,7 @@ expect
     ]
 
 expect
-    parsedInput = parse (inputParser Rps.Round.parserPart2) "A Y\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedInput = parse (inputParser Rps.Round.parserPart2) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
     parsedInput == Ok [
         {opponent: Rock, you: Rock },
         {opponent: Paper, you: Rock },
@@ -81,15 +81,15 @@ expect
 
 # these are not great parse errors!
 expect
-    parsedInput = parse (inputParser Rps.Round.parser) "AY\nB X\nC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
-    parsedInput == Err (ParsingIncomplete "AY\nB X\nC Z")
+    parsedInput = parse (inputParser Rps.Round.parser) (Str.toUtf8 "AY\nB X\nC Z") List.isEmpty
+    parsedInput == Err (ParsingIncomplete (Str.toUtf8 "AY\nB X\nC Z"))
 
 expect
-    parsedInput = parse (inputParser Rps.Round.parser) "A Y\nB XC Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
-    parsedInput == Err (ParsingIncomplete "C Z")
+    parsedInput = parse (inputParser Rps.Round.parser) (Str.toUtf8 "A Y\nB XC Z") List.isEmpty
+    parsedInput == Err (ParsingIncomplete (Str.toUtf8 "C Z"))
 
 expect
-    parsedInput = parse (inputParser Rps.Round.parser) "A Y\nB X\nC Z\n" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedInput = parse (inputParser Rps.Round.parser) (Str.toUtf8 "A Y\nB X\nC Z\n") List.isEmpty
     parsedInput == Ok [
         {opponent: Rock, you: Paper },
         {opponent: Paper, you: Rock },

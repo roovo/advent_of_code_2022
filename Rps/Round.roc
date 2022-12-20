@@ -15,12 +15,12 @@ interface Rps.Round
 Round : { opponent : Play, you : Play }
 
 
-parser : Parser Str Round
+parser : Parser (List U8) Round
 parser =
     parserHelper (\o -> \_ -> \y -> { opponent: o, you: y })
 
 
-parserPart2 : Parser Str Round
+parserPart2 : Parser (List U8) Round
 parserPart2 =
     parserHelper (\o -> \_ -> \y ->
         when P o y is
@@ -58,9 +58,9 @@ score = \round ->
     choiceScore round.you + resultScore
 
 
-### PRIVATE
+# --- PRIVATE
 
-parserHelper : (Play -> ({} -> (Play -> Round))) -> Parser Str Round
+parserHelper : (Play -> ({} -> (Play -> Round))) -> Parser (List U8) Round
 parserHelper = \builder ->
     const builder
         |> apply Rps.Play.parser
@@ -68,61 +68,61 @@ parserHelper = \builder ->
         |> apply Rps.Play.parser
 
 
-### TESTS - parser
+# --- TESTS - parser
 
 expect
-    parsedRound = parse parser "A Y" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parser (Str.toUtf8 "A Y") List.isEmpty
     parsedRound == Ok { opponent: Rock, you: Paper }
 
 expect
-    parsedRound = parse parser "B X" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parser (Str.toUtf8 "B X") List.isEmpty
     parsedRound == Ok { opponent: Paper, you: Rock }
 
 expect
-    parsedRound = parse parser "C Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parser (Str.toUtf8 "C Z") List.isEmpty
     parsedRound == Ok { opponent: Scisors, you: Scisors }
 
 expect
-    parsedRound = parse parser "BZ" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parser (Str.toUtf8 "BZ") List.isEmpty
     parsedRound == Err (ParsingFailure "whitespace expected")
 
 expect
-    parsedRound = parse parser "K Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parser (Str.toUtf8 "K Z") List.isEmpty
     parsedRound == Err (ParsingFailure "unexpected play, can only be one of: A, B, C, X, Y, or Z")
 
 expect
-    parsedRound = parse parser "A Zx" (\leftover -> Str.countUtf8Bytes leftover == 0)
-    parsedRound == Err (ParsingIncomplete "x")
+    parsedRound = parse parser (Str.toUtf8 "A Zx") List.isEmpty
+    parsedRound == Err (ParsingIncomplete ['x'])
 
 
-### TESTS - parserPart2
+# --- TESTS - parserPart2
 
 expect
-    parsedRound = parse parserPart2 "A Y" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parserPart2 (Str.toUtf8 "A Y") List.isEmpty
     parsedRound == Ok { opponent: Rock, you: Rock }
 
 expect
-    parsedRound = parse parserPart2 "B X" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parserPart2 (Str.toUtf8 "B X") List.isEmpty
     parsedRound == Ok { opponent: Paper, you: Rock }
 
 expect
-    parsedRound = parse parserPart2 "C Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parserPart2 (Str.toUtf8 "C Z") List.isEmpty
     parsedRound == Ok { opponent: Scisors, you: Rock }
 
 expect
-    parsedRound = parse parserPart2 "BZ" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parserPart2 (Str.toUtf8 "BZ") List.isEmpty
     parsedRound == Err (ParsingFailure "whitespace expected")
 
 expect
-    parsedRound = parse parserPart2 "K Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedRound = parse parserPart2 (Str.toUtf8 "K Z") List.isEmpty
     parsedRound == Err (ParsingFailure "unexpected play, can only be one of: A, B, C, X, Y, or Z")
 
 expect
-    parsedRound = parse parserPart2 "A Zx" (\leftover -> Str.countUtf8Bytes leftover == 0)
-    parsedRound == Err (ParsingIncomplete "x")
+    parsedRound = parse parserPart2 (Str.toUtf8 "A Zx") List.isEmpty
+    parsedRound == Err (ParsingIncomplete ['x'])
 
 
-### TESTS - score
+# --- TESTS - score
 
 expect
     result = score {opponent: Rock, you: Paper }

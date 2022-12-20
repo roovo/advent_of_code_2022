@@ -9,55 +9,46 @@ interface Rps.Play
 
 Play : [Rock, Paper, Scisors]
 
-parser : Parser Str Play
+parser : Parser (List U8) Play
 parser =
-    buildPrimitiveParser (\input ->
-        if Str.startsWith input "A" then
-            Ok { val: Rock, input : Str.replaceFirst input "A" "" |> Result.withDefault input }
-        else if Str.startsWith input "B" then
-            Ok { val: Paper, input : Str.replaceFirst input "B" "" |> Result.withDefault input }
-        else if Str.startsWith input "C" then
-            Ok { val: Scisors, input : Str.replaceFirst input "C" "" |> Result.withDefault input }
-        else if Str.startsWith input "X" then
-            Ok { val: Rock, input : Str.replaceFirst input "X" "" |> Result.withDefault input }
-        else if Str.startsWith input "Y" then
-            Ok { val: Paper, input : Str.replaceFirst input "Y" "" |> Result.withDefault input }
-        else if Str.startsWith input "Z" then
-            Ok { val: Scisors, input : Str.replaceFirst input "Z" "" |> Result.withDefault input }
-        else
-            Err (ParsingFailure "unexpected play, can only be one of: A, B, C, X, Y, or Z")
-    )
+    input <- buildPrimitiveParser
+    when input is
+        ['A',..] | ['X',..] -> Ok { val: Rock, input: List.dropFirst input }
+        ['B',..] | ['Y',..] -> Ok { val: Paper, input: List.dropFirst input }
+        ['C',..] | ['Z',..] -> Ok { val: Scisors, input: List.dropFirst input }
+        _ -> Err (ParsingFailure "unexpected play, can only be one of: A, B, C, X, Y, or Z")
+
+
+# --- TESTS
 
 expect
-    parsedPlay = parse parser "A" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedPlay = parse parser ['A'] List.isEmpty
     parsedPlay == Ok Rock
 
 expect
-    parsedPlay = parse parser "B" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedPlay = parse parser ['B'] List.isEmpty
     parsedPlay == Ok Paper
 
 expect
-    parsedPlay = parse parser "C" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedPlay = parse parser ['C'] List.isEmpty
     parsedPlay == Ok Scisors
 
 expect
-    parsedPlay = parse parser "X" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedPlay = parse parser ['X'] List.isEmpty
     parsedPlay == Ok Rock
 
 expect
-    parsedPlay = parse parser "Y" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedPlay = parse parser ['Y'] List.isEmpty
     parsedPlay == Ok Paper
 
 expect
-    parsedPlay = parse parser "Z" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedPlay = parse parser ['Z'] List.isEmpty
     parsedPlay == Ok Scisors
 
 expect
-    parsedPlay = parse parser "K" (\leftover -> Str.countUtf8Bytes leftover == 0)
+    parsedPlay = parse parser ['K'] List.isEmpty
     parsedPlay == Err (ParsingFailure "unexpected play, can only be one of: A, B, C, X, Y, or Z")
 
 expect
-    parsedPlay = parse parser "AB" (\leftover -> Str.countUtf8Bytes leftover == 0)
-    parsedPlay == Err (ParsingIncomplete "B")
-
-
+    parsedPlay = parse parser ['A', 'B'] List.isEmpty
+    parsedPlay == Err (ParsingIncomplete ['B'])
