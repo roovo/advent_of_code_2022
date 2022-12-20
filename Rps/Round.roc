@@ -1,13 +1,14 @@
 interface Rps.Round
     exposes [
         Round,
-        parser,
-        parserPart2,
+        fromPlayParser,
+        fromOutcomeParser,
         score,
     ]
     imports [
         Parser.Core.{ Parser, apply, const, parse },
         Parser.Helper.{ spaceParser },
+        Rps.Outcome.{ Outcome },
         Rps.Play.{ Play },
     ]
 
@@ -15,28 +16,34 @@ interface Rps.Round
 Round : { opponent : Play, you : Play }
 
 
-parser : Parser (List U8) Round
-parser =
-    parserHelper (\o -> \_ -> \y -> { opponent: o, you: y })
+fromPlayParser : Parser (List U8) Round
+fromPlayParser =
+    const (\o -> \_ -> \y -> { opponent: o, you: y })
+        |> apply Rps.Play.parser
+        |> apply spaceParser
+        |> apply Rps.Play.parser
 
 
-parserPart2 : Parser (List U8) Round
-parserPart2 =
-    parserHelper (\o -> \_ -> \y ->
+fromOutcomeParser : Parser (List U8) Round
+fromOutcomeParser =
+    fromOutcome = (\o -> \_ -> \y ->
         when P o y is
-        P Rock Rock -> { opponent: o, you: Scisors }
-        P Paper Rock -> { opponent: o, you: Rock }
-        P Scisors Rock -> { opponent: o, you: Paper }
+        P Rock Lose -> { opponent: o, you: Scisors }
+        P Paper Lose -> { opponent: o, you: Rock }
+        P Scisors Lose -> { opponent: o, you: Paper }
 
-        P Rock Paper -> { opponent: o, you: Rock }
-        P Paper Paper -> { opponent: o, you: Paper }
-        P Scisors Paper -> { opponent: o, you: Scisors }
+        P Rock Draw -> { opponent: o, you: Rock }
+        P Paper Draw -> { opponent: o, you: Paper }
+        P Scisors Draw -> { opponent: o, you: Scisors }
 
-        P Rock Scisors -> { opponent: o, you: Paper }
-        P Paper Scisors -> { opponent: o, you: Scisors }
-        P Scisors Scisors -> { opponent: o, you: Rock }
+        P Rock Win -> { opponent: o, you: Paper }
+        P Paper Win -> { opponent: o, you: Scisors }
+        P Scisors Win -> { opponent: o, you: Rock }
     )
-
+    const fromOutcome
+        |> apply Rps.Play.parser
+        |> apply spaceParser
+        |> apply Rps.Outcome.parser
 
 
 score : Round -> Nat
@@ -58,67 +65,57 @@ score = \round ->
     choiceScore round.you + resultScore
 
 
-# --- PRIVATE
-
-parserHelper : (Play -> ({} -> (Play -> Round))) -> Parser (List U8) Round
-parserHelper = \builder ->
-    const builder
-        |> apply Rps.Play.parser
-        |> apply spaceParser
-        |> apply Rps.Play.parser
-
-
-# --- TESTS - parser
+# --- TESTS - fromPlayParser
 
 expect
-    parsedRound = parse parser (Str.toUtf8 "A Y") List.isEmpty
+    parsedRound = parse fromPlayParser (Str.toUtf8 "A Y") List.isEmpty
     parsedRound == Ok { opponent: Rock, you: Paper }
 
 expect
-    parsedRound = parse parser (Str.toUtf8 "B X") List.isEmpty
+    parsedRound = parse fromPlayParser (Str.toUtf8 "B X") List.isEmpty
     parsedRound == Ok { opponent: Paper, you: Rock }
 
 expect
-    parsedRound = parse parser (Str.toUtf8 "C Z") List.isEmpty
+    parsedRound = parse fromPlayParser (Str.toUtf8 "C Z") List.isEmpty
     parsedRound == Ok { opponent: Scisors, you: Scisors }
 
 expect
-    parsedRound = parse parser (Str.toUtf8 "BZ") List.isEmpty
+    parsedRound = parse fromPlayParser (Str.toUtf8 "BZ") List.isEmpty
     parsedRound == Err (ParsingFailure "whitespace expected")
 
 expect
-    parsedRound = parse parser (Str.toUtf8 "K Z") List.isEmpty
+    parsedRound = parse fromPlayParser (Str.toUtf8 "K Z") List.isEmpty
     parsedRound == Err (ParsingFailure "unexpected play, can only be one of: A, B, C, X, Y, or Z")
 
 expect
-    parsedRound = parse parser (Str.toUtf8 "A Zx") List.isEmpty
+    parsedRound = parse fromPlayParser (Str.toUtf8 "A Zx") List.isEmpty
     parsedRound == Err (ParsingIncomplete ['x'])
 
 
-# --- TESTS - parserPart2
+# --- TESTS - fromOutcomeParser
 
 expect
-    parsedRound = parse parserPart2 (Str.toUtf8 "A Y") List.isEmpty
+    parsedRound = parse fromOutcomeParser (Str.toUtf8 "A Y") List.isEmpty
     parsedRound == Ok { opponent: Rock, you: Rock }
 
 expect
-    parsedRound = parse parserPart2 (Str.toUtf8 "B X") List.isEmpty
+    parsedRound = parse fromOutcomeParser (Str.toUtf8 "B X") List.isEmpty
     parsedRound == Ok { opponent: Paper, you: Rock }
 
 expect
-    parsedRound = parse parserPart2 (Str.toUtf8 "C Z") List.isEmpty
+    parsedRound = parse fromOutcomeParser (Str.toUtf8 "C Z") List.isEmpty
     parsedRound == Ok { opponent: Scisors, you: Rock }
 
 expect
-    parsedRound = parse parserPart2 (Str.toUtf8 "BZ") List.isEmpty
+    parsedRound = parse fromOutcomeParser (Str.toUtf8 "BZ") List.isEmpty
     parsedRound == Err (ParsingFailure "whitespace expected")
 
 expect
-    parsedRound = parse parserPart2 (Str.toUtf8 "K Z") List.isEmpty
+    parsedRound = parse fromOutcomeParser (Str.toUtf8 "K Z") List.isEmpty
     parsedRound == Err (ParsingFailure "unexpected play, can only be one of: A, B, C, X, Y, or Z")
 
 expect
-    parsedRound = parse parserPart2 (Str.toUtf8 "A Zx") List.isEmpty
+    parsedRound = parse fromOutcomeParser (Str.toUtf8 "A Zx") List.isEmpty
     parsedRound == Err (ParsingIncomplete ['x'])
 
 

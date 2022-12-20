@@ -21,11 +21,11 @@ main =
 
         part1 : Str
         part1 =
-            parseAndScore Rps.Round.parser (Str.toUtf8 contents)
+            parseAndScore Rps.Round.fromPlayParser (Str.toUtf8 contents)
 
         part2 : Str
         part2 =
-            parseAndScore Rps.Round.parserPart2 (Str.toUtf8 contents)
+            parseAndScore Rps.Round.fromOutcomeParser (Str.toUtf8 contents)
 
 
         _ <- Stdout.line "part1: \(part1)" |> Task.await
@@ -64,7 +64,7 @@ parseAndScore = \parser, contents ->
 ### TESTS - inputParser
 
 expect
-    parsedInput = parse (inputParser Rps.Round.parser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
+    parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
     parsedInput == Ok [
         {opponent: Rock, you: Paper },
         {opponent: Paper, you: Rock },
@@ -72,7 +72,7 @@ expect
     ]
 
 expect
-    parsedInput = parse (inputParser Rps.Round.parserPart2) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
+    parsedInput = parse (inputParser Rps.Round.fromOutcomeParser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
     parsedInput == Ok [
         {opponent: Rock, you: Rock },
         {opponent: Paper, you: Rock },
@@ -81,15 +81,15 @@ expect
 
 # these are not great parse errors!
 expect
-    parsedInput = parse (inputParser Rps.Round.parser) (Str.toUtf8 "AY\nB X\nC Z") List.isEmpty
+    parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "AY\nB X\nC Z") List.isEmpty
     parsedInput == Err (ParsingIncomplete (Str.toUtf8 "AY\nB X\nC Z"))
 
 expect
-    parsedInput = parse (inputParser Rps.Round.parser) (Str.toUtf8 "A Y\nB XC Z") List.isEmpty
+    parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "A Y\nB XC Z") List.isEmpty
     parsedInput == Err (ParsingIncomplete (Str.toUtf8 "C Z"))
 
 expect
-    parsedInput = parse (inputParser Rps.Round.parser) (Str.toUtf8 "A Y\nB X\nC Z\n") List.isEmpty
+    parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "A Y\nB X\nC Z\n") List.isEmpty
     parsedInput == Ok [
         {opponent: Rock, you: Paper },
         {opponent: Paper, you: Rock },
