@@ -11,12 +11,11 @@ app "aoc_day2"
     ]
     provides [main] to pf
 
-
 main : Task {} []
 main =
-   filePath = Path.fromStr "day02_input.txt"
+    filePath = Path.fromStr "day02_input.txt"
 
-   task =
+    task =
         contents <- File.readUtf8 filePath |> Task.await
 
         part1 : Str
@@ -27,15 +26,12 @@ main =
         part2 =
             parseAndScore Rps.Round.fromOutcomeParser (Str.toUtf8 contents)
 
-
         _ <- Stdout.line "part1: \(part1)" |> Task.await
         Stdout.line "part1: \(part2)"
 
-   Task.onFail task \_ -> Stdout.line "Oops something went wrong."
+    Task.onFail task \_ -> Stdout.line "Oops something went wrong."
 
-
-### PRIVATE
-
+# ## PRIVATE
 inputParser : Parser (List U8) Round -> Parser (List U8) (List Round)
 inputParser = \roundParser ->
     roundsParer =
@@ -45,8 +41,7 @@ inputParser = \roundParser ->
     |> apply roundsParer
     |> apply (Parser.Core.many lineFeedParser)
 
-
-parseAndScore : Parser (List U8) Round, (List U8) -> Str
+parseAndScore : Parser (List U8) Round, List U8 -> Str
 parseAndScore = \parser, contents ->
     scoreRounds : List Round -> List Nat
     scoreRounds = \r -> List.map r Rps.Round.score
@@ -54,44 +49,51 @@ parseAndScore = \parser, contents ->
     parse (inputParser parser) contents List.isEmpty
     |> Result.map scoreRounds
     |> Result.map List.sum
-    |> Result.map (\s ->
-                        printable = Num.toStr s
-                        "The total score is: \(printable)")
+    |> Result.map
+        (\s ->
+            printable = Num.toStr s
+
+            "The total score is: \(printable)")
     |> Result.withDefault "Ooops, the sum could not be calculated"
 
-
-
-### TESTS - inputParser
-
+# ## TESTS - inputParser
 expect
     parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
-    parsedInput == Ok [
-        {opponent: Rock, you: Paper },
-        {opponent: Paper, you: Rock },
-        {opponent: Scisors, you: Scisors },
+
+    parsedInput
+    == Ok [
+        { opponent: Rock, you: Paper },
+        { opponent: Paper, you: Rock },
+        { opponent: Scisors, you: Scisors },
     ]
 
 expect
     parsedInput = parse (inputParser Rps.Round.fromOutcomeParser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
-    parsedInput == Ok [
-        {opponent: Rock, you: Rock },
-        {opponent: Paper, you: Rock },
-        {opponent: Scisors, you: Rock },
+
+    parsedInput
+    == Ok [
+        { opponent: Rock, you: Rock },
+        { opponent: Paper, you: Rock },
+        { opponent: Scisors, you: Rock },
     ]
 
 # these are not great parse errors!
 expect
     parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "AY\nB X\nC Z") List.isEmpty
+
     parsedInput == Err (ParsingIncomplete (Str.toUtf8 "AY\nB X\nC Z"))
 
 expect
     parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "A Y\nB XC Z") List.isEmpty
+
     parsedInput == Err (ParsingIncomplete (Str.toUtf8 "C Z"))
 
 expect
     parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "A Y\nB X\nC Z\n") List.isEmpty
-    parsedInput == Ok [
-        {opponent: Rock, you: Paper },
-        {opponent: Paper, you: Rock },
-        {opponent: Scisors, you: Scisors },
+
+    parsedInput
+    == Ok [
+        { opponent: Rock, you: Paper },
+        { opponent: Paper, you: Rock },
+        { opponent: Scisors, you: Scisors },
     ]
