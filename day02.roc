@@ -7,7 +7,7 @@ app "aoc_day2"
         pf.Task.{ Task },
         Parser.Core.{ Parser, apply, const, parse },
         Parser.Helper.{ lineFeedParser },
-        Rps.Round.{ Round },
+        Day02.Round.{ Round },
     ]
     provides [main] to pf
 
@@ -20,11 +20,11 @@ main =
 
         part1 : Str
         part1 =
-            parseAndScore Rps.Round.fromPlayParser (Str.toUtf8 contents)
+            parseAndScore Day02.Round.fromPlayParser (Str.toUtf8 contents)
 
         part2 : Str
         part2 =
-            parseAndScore Rps.Round.fromOutcomeParser (Str.toUtf8 contents)
+            parseAndScore Day02.Round.fromOutcomeParser (Str.toUtf8 contents)
 
         _ <- Stdout.line "part1: \(part1)" |> Task.await
         Stdout.line "part1: \(part2)"
@@ -44,7 +44,7 @@ inputParser = \roundParser ->
 parseAndScore : Parser (List U8) Round, List U8 -> Str
 parseAndScore = \parser, contents ->
     scoreRounds : List Round -> List Nat
-    scoreRounds = \r -> List.map r Rps.Round.score
+    scoreRounds = \r -> List.map r Day02.Round.score
 
     parse (inputParser parser) contents List.isEmpty
     |> Result.map scoreRounds
@@ -58,7 +58,7 @@ parseAndScore = \parser, contents ->
 
 # ## TESTS - inputParser
 expect
-    parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
+    parsedInput = parse (inputParser Day02.Round.fromPlayParser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
 
     parsedInput
     == Ok [
@@ -68,7 +68,7 @@ expect
     ]
 
 expect
-    parsedInput = parse (inputParser Rps.Round.fromOutcomeParser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
+    parsedInput = parse (inputParser Day02.Round.fromOutcomeParser) (Str.toUtf8 "A Y\nB X\nC Z") List.isEmpty
 
     parsedInput
     == Ok [
@@ -79,17 +79,17 @@ expect
 
 # these are not great parse errors!
 expect
-    parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "AY\nB X\nC Z") List.isEmpty
+    parsedInput = parse (inputParser Day02.Round.fromPlayParser) (Str.toUtf8 "AY\nB X\nC Z") List.isEmpty
 
     parsedInput == Err (ParsingIncomplete (Str.toUtf8 "AY\nB X\nC Z"))
 
 expect
-    parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "A Y\nB XC Z") List.isEmpty
+    parsedInput = parse (inputParser Day02.Round.fromPlayParser) (Str.toUtf8 "A Y\nB XC Z") List.isEmpty
 
     parsedInput == Err (ParsingIncomplete (Str.toUtf8 "C Z"))
 
 expect
-    parsedInput = parse (inputParser Rps.Round.fromPlayParser) (Str.toUtf8 "A Y\nB X\nC Z\n") List.isEmpty
+    parsedInput = parse (inputParser Day02.Round.fromPlayParser) (Str.toUtf8 "A Y\nB X\nC Z\n") List.isEmpty
 
     parsedInput
     == Ok [

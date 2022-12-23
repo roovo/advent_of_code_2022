@@ -1,4 +1,4 @@
-interface Rps.Play
+interface Day02.Play
     exposes [
         Play,
         parser,

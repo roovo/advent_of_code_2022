@@ -1,4 +1,4 @@
-interface Rps.Round
+interface Day02.Round
     exposes [
         Round,
         fromPlayParser,
@@ -8,8 +8,8 @@ interface Rps.Round
     imports [
         Parser.Core.{ Parser, apply, const, parse },
         Parser.Helper.{ spaceParser },
-        Rps.Outcome.{ Outcome },
-        Rps.Play.{ Play },
+        Day02.Outcome.{ Outcome },
+        Day02.Play.{ Play },
     ]
 
 Round : { opponent : Play, you : Play }
@@ -17,9 +17,9 @@ Round : { opponent : Play, you : Play }
 fromPlayParser : Parser (List U8) Round
 fromPlayParser =
     const (\o -> \_ -> \y -> { opponent: o, you: y })
-    |> apply Rps.Play.parser
+    |> apply Day02.Play.parser
     |> apply spaceParser
-    |> apply Rps.Play.parser
+    |> apply Day02.Play.parser
 
 fromOutcomeParser : Parser (List U8) Round
 fromOutcomeParser =
@@ -36,9 +36,9 @@ fromOutcomeParser =
                     P Scisors Win -> { opponent: o, you: Rock }
 
     const fromOutcome
-    |> apply Rps.Play.parser
+    |> apply Day02.Play.parser
     |> apply spaceParser
-    |> apply Rps.Outcome.parser
+    |> apply Day02.Outcome.parser
 
 score : Round -> Nat
 score = \round ->

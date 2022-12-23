@@ -1,4 +1,4 @@
-interface Rps.Outcome
+interface Day02.Outcome
     exposes [
         Outcome,
         parser,
