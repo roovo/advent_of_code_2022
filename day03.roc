@@ -5,6 +5,7 @@ app "aoc_day3"
         pf.Path,
         pf.Stdout,
         pf.Task.{ Task },
+        Day03.Rucksack.{ Rucksack },
     ]
     provides [main] to pf
 
@@ -15,14 +16,16 @@ main =
     task =
         contents <- File.readUtf8 filePath |> Task.await
 
+        rucksacks : List (Rucksack U8)
         rucksacks =
             contents
             |> Str.split "\n"
-            |> List.map packRucksack
+            |> List.map Day03.Rucksack.pack
 
+        part1 : Str
         part1 =
             rucksacks
-            |> List.map findDuplicates
+            |> List.map Day03.Rucksack.findDuplicates
             |> List.map scoreItems
             |> List.sum
             |> Num.toStr
@@ -30,22 +33,6 @@ main =
         Stdout.line "part1: \(part1)"
 
     Task.onFail task \_ -> Stdout.line "Oops something went wrong."
-
-# ## PRIVATE
-Rucksack elem : { compartment1 : List elem, compartment2 : List elem }
-
-packRucksack : Str -> Rucksack U8
-packRucksack = \input ->
-    input
-    |> Str.toUtf8
-    |> List.split (Num.divCeil (Str.countUtf8Bytes input) 2)
-    |> \{ before, others } -> { compartment1: before, compartment2: others }
-
-findDuplicates : Rucksack U8 -> List U8
-findDuplicates = \rucksack ->
-    rucksack
-    |> \{ compartment1, compartment2 } -> Set.intersection (Set.fromList compartment1) (Set.fromList compartment2)
-    |> Set.toList
 
 scoreItems : List (Int *) -> Int Signed32
 scoreItems = \items ->
@@ -75,54 +62,7 @@ expect
 
     score == 52
 
-# --- TESTS - findDuplicates
 expect
-    duplicates = findDuplicates { compartment1: [], compartment2: [] }
+    score = scoreItems (Str.toUtf8 "abc")
 
-    duplicates == []
-
-expect
-    duplicates = findDuplicates { compartment1: Str.toUtf8 "a", compartment2: Str.toUtf8 "b" }
-
-    duplicates == []
-
-expect
-    duplicates = findDuplicates { compartment1: Str.toUtf8 "a", compartment2: Str.toUtf8 "a" }
-
-    duplicates == Str.toUtf8 "a"
-
-expect
-    duplicates = findDuplicates { compartment1: Str.toUtf8 "abcde", compartment2: Str.toUtf8 "xyaz" }
-
-    duplicates == Str.toUtf8 "a"
-
-expect
-    duplicates = findDuplicates { compartment1: Str.toUtf8 "abcde", compartment2: Str.toUtf8 "xyazb" }
-
-    duplicates == Str.toUtf8 "ab"
-
-# --- TESTS - packRucksack
-expect
-    packedRucksack = packRucksack ""
-
-    packedRucksack == { compartment1: [], compartment2: [] }
-
-expect
-    packedRucksack = packRucksack "a"
-
-    packedRucksack == { compartment1: Str.toUtf8 "a", compartment2: [] }
-
-expect
-    packedRucksack = packRucksack "ab"
-
-    packedRucksack == { compartment1: Str.toUtf8 "a", compartment2: Str.toUtf8 "b" }
-
-expect
-    packedRucksack = packRucksack "cdab"
-
-    packedRucksack == { compartment1: Str.toUtf8 "cd", compartment2: Str.toUtf8 "ab" }
-
-expect
-    packedRucksack = packRucksack "cdzab"
-
-    packedRucksack == { compartment1: Str.toUtf8 "cdz", compartment2: Str.toUtf8 "ab" }
+    score == 6
